@@ -1,0 +1,122 @@
+name: "Anthropic Code Review"
+description: "Performs an AI-based code review on a pull request using the Anthropic API."
+author: "Your Name or Org"
+branding:
+  color: "orange"
+  icon: "eye"
+
+inputs:
+  anthropic_api_key:
+    description: "Your Anthropic API key."
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        # NOTE: For the PR context to work properly, you must run
+        # this Action in a workflow triggered by a PR event.
+        # The 'ref' argument below references the HEAD of the PR.
+        fetch-depth: 0
+        ref: ${{ env.PR_HEAD_SHA }}
+      env:
+        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+    - name: Get git diff
+      id: git-diff
+      run: |
+        # Get the base SHA for comparison from env variables
+        # assigned below in "env" because composite actions
+        # cannot directly read event payload except via env.
+        BASE_SHA=${BASE_SHA}
+        HEAD_SHA=${PR_HEAD_SHA}
+
+        # Generate the diff
+        git diff $BASE_SHA..$HEAD_SHA > diff.txt
+      env:
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests PyGithub
+
+    - name: Send to Anthropic API
+      run: |
+        python - <<EOF
+        import os
+        import json
+        import requests
+        from github import Github
+        import sys
+
+        try:
+            # Get the diff content
+            with open('diff.txt', 'r') as f:
+                diff_content = f.read()
+
+            # Prepare the prompt
+            prompt = f\"\"\"You are a master engineer tasked with reviewing a pull request...
+            [Include your full prompt text here, same as in your workflow]
+            \"\"\"
+
+            # Make Anthropic API request
+            headers = {
+                "x-api-key": os.environ["ANTHROPIC_API_KEY"],
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json"
+            }
+
+            data = {
+                "model": "claude-3-5-sonnet-20241022",
+                "max_tokens": 8192,
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ]
+            }
+
+            response = requests.post("https://api.anthropic.com/v1/messages", headers=headers, json=data)
+            response.raise_for_status()
+
+            # Extract review content
+            # Adjust this to reflect the *exact* JSON response structure
+            # that you receive from Anthropic
+            # (Some Anthropics models might return "completion" or "content")
+            try:
+                review_content = response.json()["content"][0]["text"]
+            except:
+                # Fallback: print raw response for debugging
+                review_content = response.text
+
+            # Get PR number from event payload
+            event_path = os.getenv('GITHUB_EVENT_PATH')
+            if not event_path:
+                raise ValueError("GITHUB_EVENT_PATH is not set.")
+
+            with open(event_path, 'r') as f:
+                event_data = json.load(f)
+                pr_number = event_data['pull_request']['number']
+
+            # Post a PR comment
+            g = Github(os.environ["GITHUB_TOKEN"])
+            repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
+            pr = repo.get_pull(pr_number)
+            pr.create_issue_comment(f\"{review_content}\")
+
+        except Exception as e:
+            print(f"Error: {str(e)}", file=sys.stderr)
+            sys.exit(1)
+        EOF
+      env:
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_EVENT_PATH: ${{ github.event_path }}

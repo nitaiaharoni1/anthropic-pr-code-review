@@ -1,0 +1,54 @@
+## Anthropic Code Review Action License
+
+**Version 1.0.0**
+
+**Copyright (c) 2025 Nitai Aharoni.
+All Rights Reserved.**
+
+1. **Grant of License**
+   Subject to the terms and conditions herein, the Licensor hereby grants you (the “Licensee”) a revocable, non-exclusive, non-transferable, non-sublicensable license to access and use the **Anthropic Code Review Action** (“Software”) solely:
+   - In association with your GitHub repository(ies) for automated code review on pull requests; and
+   - For internal business or personal purposes.
+
+2. **Restrictions**
+   - You may **not**:
+     1. Modify, distribute, publicly display, or publicly perform the Software, in whole or in part, except as expressly permitted in writing by the Licensor.
+     2. Sell, sublicense, or otherwise commercialize the Software.
+     3. Remove or alter any copyright notices or proprietary labels.
+   - The source code provided herein is **source-available** for reference and usage within GitHub workflows only. It is **not** open source, and no rights are granted under any open source license.
+
+3. **Confidentiality**
+   You acknowledge that the Software and any related documentation may contain proprietary information. You agree to use reasonable efforts to maintain the confidentiality of such proprietary information and to not disclose such information to any third party without the Licensor’s prior written consent.
+
+4. **Reservation of Rights**
+   All rights not expressly granted in this License are reserved by the Licensor. No additional rights or licenses are granted by implication or estoppel.
+
+5. **Term and Termination**
+   - This License is effective until terminated.
+   - The Licensor may terminate this License immediately upon notice if you breach any provision of this License.
+   - Upon termination, you must cease all use of the Software and destroy any copies in your possession or control.
+
+6. **Disclaimer of Warranties**
+   THE SOFTWARE IS PROVIDED ON AN “AS IS” AND “AS AVAILABLE” BASIS, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. YOUR USE OF THE SOFTWARE IS AT YOUR SOLE RISK.
+
+7. **Limitation of Liability**
+   TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL THE LICENSOR OR ITS AFFILIATES BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT, CONSEQUENTIAL, OR PUNITIVE DAMAGES WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DAMAGES FOR LOSS OF PROFITS, BUSINESS INTERRUPTION, LOSS OF INFORMATION) ARISING OUT OF OR IN CONNECTION WITH THE USE OR INABILITY TO USE THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+8. **Indemnification**
+   You agree to indemnify, defend, and hold harmless the Licensor, its affiliates, officers, directors, agents, and employees from and against any and all third-party claims, liabilities, damages, losses, or expenses (including attorneys’ fees) arising out of or in any way connected with your use of the Software.
+
+9. **Governing Law and Venue**
+   This License shall be governed by and construed in accordance with the laws of the jurisdiction in which the Licensor is located, without regard to conflict of law principles. The parties consent to the exclusive jurisdiction and venue of the courts located in the Licensor’s principal place of business.
+
+10. **Entire Agreement**
+   This License constitutes the entire agreement between you and the Licensor regarding the Software and supersedes all prior or contemporaneous agreements, understandings, or communications, whether written or oral.
+
+11. **Severability**
+   If any provision of this License is held invalid, illegal, or unenforceable, the remaining provisions shall be enforced to the fullest extent possible.
+
+12. **Amendments**
+   The Licensor reserves the right to modify or replace the terms of this License at any time. Any changes will be effective immediately upon posting or notification.
+
+---
+
+*By installing, copying, or otherwise using the Software, you acknowledge that you have read and understood this License and agree to be bound by its terms.*
