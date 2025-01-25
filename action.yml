@@ -78,13 +78,13 @@ runs:
               6. Present your code review in the following markdown format:
               ## AI Code Review
           
-              ## 🤖 AI Code Review
+              ## AI Code Review
 
-              ### 📋 Summary:
+              ### Summary:
               [Provide a brief summary paragraph of the code changes]
               
               ### 🟢/🟡/🟠/🔴 Grade:
-              #### 90-100: Excellent - Code meets high standards (can have nice to have improvements). 80-90: Very Good - Code meets high standards with minor improvements needed. 70-80: Ok - But minor improvements needed. 40-69: Needs Work - Significant issues to address. 0-39: Critical - Major problems require immediate attention
+              #### 90-100: Excellent - Code meets high standards, with room for optional enhancements, or perfect. 80-90: Very Good - Code meets high standards with small improvements needed. 70-80: Ok - But minor improvements needed. 40-69: Needs Work - Significant issues to address. 0-39: Critical - Major problems require immediate attention
 
               ### 🎯 Conclusion:
               [Offer a short conclusion about whether the pull request is ready to be merged or needs further work]
