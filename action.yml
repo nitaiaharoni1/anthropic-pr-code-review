@@ -17,20 +17,15 @@ runs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        ref: ${{ env.PR_HEAD_SHA }}
-      env:
-        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        ref: ${{ github.event.pull_request.head.sha }}
 
     - name: Get git diff
       id: git-diff
       shell: bash
       run: |
-        BASE_SHA=${BASE_SHA}
-        HEAD_SHA=${PR_HEAD_SHA}
-        git diff $BASE_SHA..$HEAD_SHA > diff.txt
-      env:
-        BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        echo "Getting diff between ${{ github.event.pull_request.base.sha }} and ${{ github.event.pull_request.head.sha }}"
+        git diff ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > diff.txt
+        echo "Diff size: $(wc -l < diff.txt) lines"
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -46,22 +41,51 @@ runs:
     - name: Send to Anthropic API
       shell: bash
       run: |
-        python << 'END_PYTHON'
+        cat << 'EOL' > review_script.py
         import os
         import json
         import requests
         from github import Github
         import sys
 
-        try:
-            # Get the diff content
-            with open('diff.txt', 'r') as f:
-                diff_content = f.read()
+        def create_review_prompt(pr_title, pr_body, diff_content):
+            return f"""You are a master software engineer reviewing a pull request. Please provide a thorough code review.
 
-            # Prepare the prompt
-            prompt = """You are a master engineer tasked with reviewing a pull request...
-            [Include your full prompt text here, same as in your workflow]
-            """
+        Changes Overview:
+        Title: {pr_title}
+        Description: {pr_body or 'No description provided'}
+
+        Changes:
+        ```diff
+        {diff_content}
+        ```
+
+        Please analyze these changes and provide:
+        1. Summary of changes
+        2. Code quality analysis
+        3. Performance impact
+        4. Security review
+        5. Improvement suggestions
+        6. Questions for clarification
+
+        Use markdown formatting."""
+
+        try:
+            # Read the diff content
+            with open('diff.txt', 'r', encoding='utf-8') as f:
+                diff_content = f.read().strip()
+            
+            if not diff_content:
+                raise ValueError("No diff content found")
+
+            # Get PR details from GitHub API
+            g = Github(os.environ["GITHUB_TOKEN"])
+            repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
+            pr_number = int(os.environ["PR_NUMBER"])
+            pr = repo.get_pull(pr_number)
+
+            # Generate the review prompt
+            prompt = create_review_prompt(pr.title, pr.body, diff_content)
 
             # Make Anthropic API request
             headers = {
@@ -78,36 +102,36 @@ runs:
                 ]
             }
 
-            response = requests.post("https://api.anthropic.com/v1/messages", headers=headers, json=data)
+            print("Sending request to Anthropic API...")
+            response = requests.post(
+                "https://api.anthropic.com/v1/messages",
+                headers=headers,
+                json=data,
+                timeout=30
+            )
             response.raise_for_status()
 
             # Extract review content
             try:
                 review_content = response.json()["content"][0]["text"]
-            except:
-                review_content = response.text
+            except (KeyError, IndexError) as e:
+                print(f"Error parsing API response: {e}")
+                print(f"Raw response: {response.text}")
+                raise
 
-            # Get PR number from event payload
-            event_path = os.getenv('GITHUB_EVENT_PATH')
-            if not event_path:
-                raise ValueError("GITHUB_EVENT_PATH is not set.")
-
-            with open(event_path, 'r') as f:
-                event_data = json.load(f)
-                pr_number = event_data['pull_request']['number']
-
-            # Post a PR comment
-            g = Github(os.environ["GITHUB_TOKEN"])
-            repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
-            pr = repo.get_pull(pr_number)
-            pr.create_issue_comment(f"{review_content}")
+            print("Posting review comment...")
+            pr.create_issue_comment(review_content)
+            print("Review posted successfully!")
 
         except Exception as e:
             print(f"Error: {str(e)}", file=sys.stderr)
             sys.exit(1)
-        END_PYTHON
+        EOL
+
+        python review_script.py
       env:
         ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
         GITHUB_TOKEN: ${{ github.token }}
         GITHUB_REPOSITORY: ${{ github.repository }}
         GITHUB_EVENT_PATH: ${{ github.event_path }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
