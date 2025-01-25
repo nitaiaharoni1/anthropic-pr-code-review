@@ -1,6 +1,6 @@
-name: "Anthropic Code Review"
+name: "Anthropic PR Code Review"
 description: "Performs an AI-based code review on a pull request using the Anthropic API."
-author: "Your Name or Org"
+author: "Nitai Aharoni"
 branding:
   color: "orange"
   icon: "eye"

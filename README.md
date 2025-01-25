@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: AI Code Review
-        uses: your-org/anthropic-code-review-action@v1.0.0
+        uses: nitaiaharoni1/anthropic-code-review-action@v1.0.0
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
