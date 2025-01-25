@@ -49,26 +49,51 @@ runs:
         import sys
 
         def create_review_prompt(pr_title, pr_body, diff_content):
-            return f"""You are a master software engineer reviewing a pull request. Please provide a thorough code review.
+            return f"""You are a master engineer tasked with reviewing a pull request based on a git diff. Your goal is to provide a quick and simple code review focusing on critical aspects, potential bugs, performance issues, and maintainability. 
 
-        Changes Overview:
-        Title: {pr_title}
-        Description: {pr_body or 'No description provided'}
+              Here's the git diff you need to analyze:
+              {diff_content}
 
-        Changes:
-        ```diff
-        {diff_content}
-        ```
+              Follow these steps to conduct your code review:
+              1. Carefully examine the git diff provided above. Make sure yo focus on only changed code. Remember that the diff may contain multiple files and changes, the sign "-" indicates code that was removed, and the sign "+" indicates code that was added.
 
-        Please analyze these changes and provide:
-        1. Summary of changes
-        2. Code quality analysis
-        3. Performance impact
-        4. Security review
-        5. Improvement suggestions
-        6. Questions for clarification
+              2. Analyze the changes with a focus on the following aspects:
+                 a. Potential bugs or logical errors
+                 b. Performance issues or inefficiencies
+                 c. Code maintainability and readability
+                 d. Adherence to best practices and coding standards
+                 e. Security concerns
+                 f. Scalability issues
 
-        Use markdown formatting."""
+              3. For each significant issue or observation, provide:
+                 a. A brief description of the issue
+                 b. The location in the code (file name and line number, if applicable)
+                 c. An explanation of why it's problematic
+                 d. A suggested improvement or solution
+
+              4. Prioritize your comments, focusing on the most critical issues first.
+          
+              5. Do not review or comment about good changes, only bad changes, improvements, or suggestions.
+
+              6. Present your code review in the following markdown format:
+              ## AI Code Review
+          
+              ## 🤖 AI Code Review
+
+              ### 📋 Summary:
+              [Provide a brief summary paragraph of the code changes]
+              
+              ### 🟢/🟡/🟠/🔴 Grade:
+              #### 90-100: Excellent - Code meets high standards (can have nice to have improvements). 80-90: Very Good - Code meets high standards with minor improvements needed. 70-80: Ok - But minor improvements needed. 40-69: Needs Work - Significant issues to address. 0-39: Critical - Major problems require immediate attention
+
+              ### 🎯 Conclusion:
+              [Offer a short conclusion about whether the pull request is ready to be merged or needs further work]"""
+              
+              ### ⚠️ Issues:
+              [List the most important issues identified, that should be fixed, organized by file. if any]
+              
+              ### 💡 Suggestions:
+              [Provide your review of improvement suggestions or nice to have fixes, organized by file. if any]
 
         try:
             # Read the diff content
