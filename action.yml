@@ -46,7 +46,7 @@ runs:
     - name: Send to Anthropic API
       shell: bash
       run: |
-        python - <<EOF
+        python << 'END_PYTHON'
         import os
         import json
         import requests
@@ -59,9 +59,9 @@ runs:
                 diff_content = f.read()
 
             # Prepare the prompt
-            prompt = f\"\"\"You are a master engineer tasked with reviewing a pull request...
+            prompt = """You are a master engineer tasked with reviewing a pull request...
             [Include your full prompt text here, same as in your workflow]
-            \"\"\"
+            """
 
             # Make Anthropic API request
             headers = {
@@ -100,12 +100,12 @@ runs:
             g = Github(os.environ["GITHUB_TOKEN"])
             repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
             pr = repo.get_pull(pr_number)
-            pr.create_issue_comment(f\"{review_content}\")
+            pr.create_issue_comment(f"{review_content}")
 
         except Exception as e:
             print(f"Error: {str(e)}", file=sys.stderr)
             sys.exit(1)
-        EOF
+        END_PYTHON
       env:
         ANTHROPIC_API_KEY: ${{ inputs.anthropic_api_key }}
         GITHUB_TOKEN: ${{ github.token }}
