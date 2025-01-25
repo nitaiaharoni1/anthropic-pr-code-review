@@ -87,13 +87,13 @@ runs:
               #### 90-100: Excellent - Code meets high standards (can have nice to have improvements). 80-90: Very Good - Code meets high standards with minor improvements needed. 70-80: Ok - But minor improvements needed. 40-69: Needs Work - Significant issues to address. 0-39: Critical - Major problems require immediate attention
 
               ### 🎯 Conclusion:
-              [Offer a short conclusion about whether the pull request is ready to be merged or needs further work]"""
+              [Offer a short conclusion about whether the pull request is ready to be merged or needs further work]
               
               ### ⚠️ Issues:
               [List the most important issues identified, that should be fixed, organized by file. if any]
               
               ### 💡 Suggestions:
-              [Provide your review of improvement suggestions or nice to have fixes, organized by file. if any]
+              [Provide your review of improvement suggestions or nice to have fixes, organized by file. if any]"""
 
         try:
             # Read the diff content
