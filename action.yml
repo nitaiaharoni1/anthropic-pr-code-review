@@ -19,26 +19,51 @@ runs:
         fetch-depth: 0
         ref: ${{ github.event.pull_request.head.sha }}
 
+    - name: Fetch base branch
+      shell: bash
+      run: |
+        echo "Fetching base branch: ${{ github.event.pull_request.base.ref }}"
+        git fetch origin ${{ github.event.pull_request.base.ref }}:${{ github.event.pull_request.base.ref }}
+
     - name: Get git diff
       id: git-diff
       shell: bash
       run: |
         echo "Getting diff between ${{ github.event.pull_request.base.sha }} and ${{ github.event.pull_request.head.sha }}"
+        
+        # Check if we have a valid diff
+        if git diff --quiet ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}; then
+          echo "No changes detected in PR"
+          echo "diff_exists=false" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        
         git diff ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > diff.txt
+        
+        # Check if diff file was created and has content
+        if [ ! -f "diff.txt" ] || [ ! -s "diff.txt" ]; then
+          echo "Error: Could not generate diff or diff is empty"
+          exit 1
+        fi
+        
         echo "Diff size: $(wc -l < diff.txt) lines"
+        echo "diff_exists=true" >> $GITHUB_OUTPUT
 
     - name: Set up Python
+      if: steps.git-diff.outputs.diff_exists == 'true'
       uses: actions/setup-python@v5
       with:
         python-version: "3.10"
 
     - name: Install dependencies
+      if: steps.git-diff.outputs.diff_exists == 'true'
       shell: bash
       run: |
         python -m pip install --upgrade pip
         pip install requests PyGithub
 
     - name: Send to Anthropic API
+      if: steps.git-diff.outputs.diff_exists == 'true'
       shell: bash
       run: |
         cat << 'EOL' > review_script.py
@@ -96,18 +121,35 @@ runs:
               [Provide your review of improvement suggestions or nice to have fixes, organized by file. if any]"""
 
         try:
+            # Check if diff file exists and has content
+            if not os.path.exists('diff.txt'):
+                print("Error: diff.txt not found")
+                sys.exit(1)
+                
             # Read the diff content
             with open('diff.txt', 'r', encoding='utf-8') as f:
                 diff_content = f.read().strip()
             
             if not diff_content:
-                raise ValueError("No diff content found")
+                print("No changes to review")
+                sys.exit(0)
+
+            # Validate environment variables
+            required_vars = ['GITHUB_TOKEN', 'GITHUB_REPOSITORY', 'PR_NUMBER', 'ANTHROPIC_API_KEY']
+            for var in required_vars:
+                if not os.environ.get(var):
+                    print(f"Error: Missing required environment variable: {var}")
+                    sys.exit(1)
 
             # Get PR details from GitHub API
-            g = Github(os.environ["GITHUB_TOKEN"])
-            repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
-            pr_number = int(os.environ["PR_NUMBER"])
-            pr = repo.get_pull(pr_number)
+            try:
+                g = Github(os.environ["GITHUB_TOKEN"])
+                repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
+                pr_number = int(os.environ["PR_NUMBER"])
+                pr = repo.get_pull(pr_number)
+            except Exception as e:
+                print(f"Error accessing GitHub API: {e}")
+                sys.exit(1)
 
             # Generate the review prompt
             prompt = create_review_prompt(pr.title, pr.body, diff_content)
@@ -128,28 +170,37 @@ runs:
             }
 
             print("Sending request to Anthropic API...")
-            response = requests.post(
-                "https://api.anthropic.com/v1/messages",
-                headers=headers,
-                json=data,
-                timeout=30
-            )
-            response.raise_for_status()
+            try:
+                response = requests.post(
+                    "https://api.anthropic.com/v1/messages",
+                    headers=headers,
+                    json=data,
+                    timeout=60
+                )
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                print(f"Error calling Anthropic API: {e}")
+                sys.exit(1)
 
             # Extract review content
             try:
-                review_content = response.json()["content"][0]["text"]
+                response_data = response.json()
+                review_content = response_data["content"][0]["text"]
             except (KeyError, IndexError) as e:
                 print(f"Error parsing API response: {e}")
                 print(f"Raw response: {response.text}")
-                raise
+                sys.exit(1)
 
             print("Posting review comment...")
-            pr.create_issue_comment(review_content)
-            print("Review posted successfully!")
+            try:
+                pr.create_issue_comment(review_content)
+                print("✅ Review posted successfully!")
+            except Exception as e:
+                print(f"Error posting comment: {e}")
+                sys.exit(1)
 
         except Exception as e:
-            print(f"Error: {str(e)}", file=sys.stderr)
+            print(f"Unexpected error: {str(e)}", file=sys.stderr)
             sys.exit(1)
         EOL
 
