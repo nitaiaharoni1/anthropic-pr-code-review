@@ -4,6 +4,7 @@ A composite Action that automates **pull request code reviews** using the Anthro
 
 ## Features
 
+
 1. **AI-driven reviews** using Anthropic’s Claude model (`claude-3-5-sonnet-20241022`).
 2. Provides feedback on potential bugs, maintainability, performance, and security concerns.
 3. Posts findings as a **pull request comment** in Markdown format, including:
